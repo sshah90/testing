@@ -1,25 +1,33 @@
+from django.contrib.auth import login, authenticate
 from django.shortcuts import render, redirect
-from firstapp.smit import RegistrationForm
-
-from django.contrib.auth.models import User
-from django.contrib.auth.forms import UserChangeForm, PasswordChangeForm
-from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.decorators import login_required
-
-# Create your views here.
+from firstapp.forms import SignUpForm
+from django.contrib import messages
+from firstapp.models import UserProfile
+from django.template.response import  TemplateResponse
 
 def home(request):
 
     return render(request,"home.html")
 
+
 def signup(request):
     if request.method == 'POST':
-        form = RegistrationForm(request.POST)
+        form = SignUpForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect((''))
-    else:
-        form = RegistrationForm()
+            username = form.cleaned_data.get('username')
+            raw_password = form.cleaned_data.get('password1')
+            user = authenticate(username=username, password=raw_password)
+            login(request, user)
+            messages.success(request, 'You are now our member, Please Log in...!')
 
-        args = {'form': form}
-        return render(request, 'reg_form.html', args)
+            return redirect('home')
+
+    else:
+        form = SignUpForm()
+    return render(request, 'reg_form.html', {'form': form})
+
+
+def data_base(request):
+    data=UserProfile.objects.all()
+    return TemplateResponse(request,'user.html',{'data':data})
